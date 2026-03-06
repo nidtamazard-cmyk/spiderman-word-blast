@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spider-Man Reading Mission!</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e02020;
+    --darkred: #8b0000;
+    --blue: #1a3a8f;
+    --darkblue: #0d1f4f;
+    --white: #f5f5f5;
+    --yellow: #FFD700;
+    --webgray: rgba(255,255,255,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--darkblue);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: white;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><circle cx='10' cy='10' r='4' fill='%23e02020'/><circle cx='10' cy='10' r='2' fill='white'/></svg>") 10 10, auto;
+  }
+
+  /* ── WEB BACKGROUND ── */
+  .web-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .web-bg svg {
+    position: absolute;
+    opacity: 0.06;
+  }
+
+  /* City skyline silhouette */
+  .city {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 160px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Spider hanging from top */
+  .spider-hang {
+    position: fixed;
+    top: 0;
+    right: 60px;
+    z-index: 2;
+    pointer-events: none;
+    animation: hangSwing 4s ease-in-out infinite;
+    transform-origin: top center;
+  }
+
+  .web-thread {
+    width: 2px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2));
+    margin: 0 auto;
+    border-radius: 1px;
+    animation: threadStretch 4s ease-in-out infinite;
+  }
+
+  .spider-emoji {
+    font-size: 2.8rem;
+    display: block;
+    text-align: center;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  }
+
+  @keyframes hangSwing {
+    0%,100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  @keyframes threadStretch {
+    0%,100% { height: 120px; }
+    50% { height: 140px; }
+  }
+
+  /* Floating web dots */
+  .web-dot {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    pointer-events: none;
+    animation: floatDot linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes floatDot {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+  }
+
+  /* ── LAYOUT ── */
+  .game-container {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px 16px 80px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 8px 0 14px;
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: var(--red);
+    color: white;
+    font-family: 'Bangers', cursive;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    padding: 4px 14px;
+    border-radius: 50px;
+    margin-bottom: 6px;
+    box-shadow: 0 2px 10px rgba(224,32,32,0.5);
+  }
+
+  h1 {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    letter-spacing: 3px;
+    line-height: 1;
+    color: var(--white);
+    text-shadow: 3px 3px 0 var(--darkred), 6px 6px 0 rgba(0,0,0,0.3);
+    margin-bottom: 2px;
+  }
+
+  h1 span { color: var(--red); }
+
+  .subtitle {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── HEALTH / SCORE BAR ── */
+  .hud {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 50px;
+    padding: 10px 18px;
+    backdrop-filter: blur(8px);
+  }
+
+  .score-pill {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    color: var(--yellow);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+  }
+
+  .xp-track {
+    flex: 1;
+    height: 12px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), #ff6b6b);
+    border-radius: 50px;
+    width: 0%;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(224,32,32,0.6);
+  }
+
+  .q-pill {
+    font-weight: 900;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  /* ── MODE TABS ── */
+  .mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .mode-tabs { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .tab-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    padding: 10px 4px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    background: rgba(0,0,0,0.3);
+    color: rgba(255,255,255,0.4);
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.4;
+    backdrop-filter: blur(4px);
+  }
+
+  .tab-btn:hover { border-color: rgba(224,32,32,0.5); color: rgba(255,255,255,0.8); }
+  .tab-btn.active { border-color: var(--red); color: var(--yellow); background: rgba(224,32,32,0.15); box-shadow: 0 0 12px rgba(224,32,32,0.3); }
+
+  /* ── CARD ── */
+  .card {
+    background: linear-gradient(145deg, rgba(26,58,143,0.7), rgba(13,31,79,0.9));
+    border-radius: 24px;
+    padding: 26px 22px;
+    border: 2px solid rgba(224,32,32,0.3);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Web corner decorations on card */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -30px; left: -30px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle at 0% 0%, rgba(224,32,32,0.15), transparent 70%);
+    pointer-events: none;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle at 100% 100%, rgba(224,32,32,0.1), transparent 70%);
+    pointer-events: none;
+  }
+
+  .prompt-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  /* ── QUESTION DISPLAYS ── */
+  .big-word {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3rem, 14vw, 6.5rem);
+    letter-spacing: 8px;
+    margin: 8px 0 12px;
+    display: inline-block;
+    animation: webShoot 0.5s cubic-bezier(.36,1.56,.64,1);
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+  }
+
+  @keyframes webShoot {
+    0% { transform: scale(0.4) translateY(-20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .heart-word-display {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3.5rem, 16vw, 8rem);
+    letter-spacing: 8px;
+    color: var(--red);
+    text-shadow: 3px 3px 0 var(--darkred), 0 0 30px rgba(224,32,32,0.4);
+    animation: webShoot 0.5s cubic-bezier(.36,1.56,.64,1);
+    display: block;
+    margin: 10px 0;
+  }
+
+  .sentence-display {
+    font-size: clamp(1.1rem, 4vw, 1.45rem);
+    line-height: 1.9;
+    color: rgba(255,255,255,0.9);
+    margin: 10px 0 12px;
+    padding: 16px 18px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: webShoot 0.4s ease;
+  }
+
+  .blank-slot {
+    display: inline-block;
+    min-width: 110px;
+    border-bottom: 3px solid var(--yellow);
+    color: var(--yellow);
+    font-weight: 900;
+    padding: 0 6px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+  }
+
+  .pattern-display {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(4rem, 18vw, 8rem);
+    letter-spacing: 10px;
+    color: var(--yellow);
+    text-shadow: 4px 4px 0 rgba(200,150,0,0.5), 0 0 40px rgba(255,215,0,0.3);
+    animation: webShoot 0.5s cubic-bezier(.36,1.56,.64,1);
+    margin: 6px 0;
+  }
+
+  .sound-hint {
+    color: rgba(255,255,255,0.4);
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    margin-top: -6px;
+    margin-bottom: 8px;
+  }
+
+  .chain-display {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(1.1rem, 4.5vw, 1.7rem);
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.6);
+    padding: 16px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.07);
+    margin: 8px 0 12px;
+    animation: webShoot 0.4s ease;
+    line-height: 1.7;
+  }
+
+  .chain-word { color: #60a5fa; }
+  .chain-q { color: var(--yellow); font-size: 1.5em; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
+
+  /* ── CHOICES ── */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .choice-btn {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(1.2rem, 5vw, 1.9rem);
+    letter-spacing: 2px;
+    padding: 16px 10px;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    background: rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .choice-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+    pointer-events: none;
+  }
+
+  .choice-btn:hover:not(:disabled) {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--red);
+    box-shadow: 0 8px 20px rgba(224,32,32,0.3);
+    background: rgba(224,32,32,0.15);
+  }
+
+  .choice-btn.correct {
+    background: rgba(34,197,94,0.2) !important;
+    border-color: #22c55e !important;
+    color: #86efac;
+    box-shadow: 0 0 20px rgba(34,197,94,0.3);
+    animation: correctWeb 0.5s ease;
+  }
+
+  .choice-btn.wrong {
+    background: rgba(239,68,68,0.2) !important;
+    border-color: #ef4444 !important;
+    color: #fca5a5;
+    animation: wrongShake 0.4s ease;
+  }
+
+  @keyframes correctWeb {
+    0%,100% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+  }
+
+  @keyframes wrongShake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    margin-top: 14px;
+    min-height: 2rem;
+  }
+
+  .feedback.good { color: #4ade80; text-shadow: 0 0 10px rgba(74,222,128,0.4); }
+  .feedback.bad { color: #f87171; }
+
+  /* ── NEXT BUTTON ── */
+  .next-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    padding: 13px 36px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--red), #c01010);
+    color: white;
+    cursor: pointer;
+    margin-top: 14px;
+    box-shadow: 0 6px 20px rgba(224,32,32,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.15s;
+    display: none;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+
+  .next-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(224,32,32,0.5); }
+  .next-btn:active { transform: translateY(1px); }
+
+  /* ── SOUND TOGGLE ── */
+  .sound-toggle {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    padding: 10px 22px;
+    border-radius: 50px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sound-toggle:hover { border-color: var(--yellow); color: var(--yellow); }
+  .sound-toggle.on { border-color: var(--yellow); color: var(--yellow); background: rgba(255,215,0,0.1); }
+  .sound-toggle .toggle-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: background 0.2s;
+  }
+  .sound-toggle.on .toggle-dot { background: var(--yellow); box-shadow: 0 0 6px rgba(255,215,0,0.8); }
+
+  /* Speaker button on question words */
+  .speak-btn {
+    background: none;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: 10px;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: white;
+    flex-shrink: 0;
+  }
+  .speak-btn:hover { border-color: var(--yellow); transform: scale(1.1); background: rgba(255,215,0,0.1); }
+  .speak-btn.speaking { border-color: var(--yellow); background: rgba(255,215,0,0.15); animation: speakPulse 0.6s ease infinite alternate; }
+
+  @keyframes speakPulse {
+    from { box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
+    to   { box-shadow: 0 0 0 8px rgba(255,215,0,0); }
+  }
+
+  /* Choice speak buttons */
+  .choice-speak {
+    font-size: 0.9rem;
+    opacity: 0.5;
+    margin-left: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    vertical-align: middle;
+  }
+  .choice-speak:hover { opacity: 1; }
+
+  /* Auto-read indicator */
+  .autoread-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--yellow), var(--red));
+    border-radius: 2px;
+    margin-bottom: 14px;
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+
+  /* ── STREAK / POWER UP ── */
+  .streak-badge {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: linear-gradient(135deg, var(--red), var(--darkred));
+    color: white;
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    z-index: 10;
+    display: none;
+    box-shadow: 0 4px 15px rgba(224,32,32,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: webShoot 0.4s ease;
+  }
+
+  /* ── WEB SHOOTERS (confetti) ── */
+  .confetti-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  .web-shot {
+    position: absolute;
+    pointer-events: none;
+    animation: webFall linear forwards;
+    font-size: 1rem;
+  }
+
+  @keyframes webFall {
+    0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(540deg); opacity: 0; }
+  }
+
+  /* ── END SCREEN ── */
+  .end-screen {
+    display: none;
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .end-hero {
+    font-size: 5rem;
+    margin-bottom: 8px;
+    animation: webShoot 0.6s cubic-bezier(.36,1.56,.64,1);
+    display: block;
+  }
+
+  .end-screen h2 {
+    font-family: 'Bangers', cursive;
+    font-size: 2.8rem;
+    letter-spacing: 3px;
+    color: var(--yellow);
+    text-shadow: 3px 3px 0 rgba(200,150,0,0.4);
+    margin-bottom: 6px;
+  }
+
+  .end-score {
+    font-family: 'Bangers', cursive;
+    font-size: 4rem;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-shadow: 3px 3px 0 var(--darkred), 0 0 30px rgba(224,32,32,0.4);
+    margin: 8px 0;
+  }
+
+  .end-message {
+    color: rgba(255,255,255,0.5);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .play-again-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    padding: 15px 42px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--red), #c01010);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(224,32,32,0.4);
+    transition: all 0.15s;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+
+  .play-again-btn:hover { transform: translateY(-3px) scale(1.03); }
+
+  /* ── PASSAGE STYLES ── */
+  .passage-wrap {
+    text-align: left;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 8px 0 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--red) rgba(0,0,0,0.2);
+    animation: webShoot 0.4s ease;
+  }
+
+  .passage-wrap::-webkit-scrollbar { width: 6px; }
+  .passage-wrap::-webkit-scrollbar-thumb { background: var(--red); border-radius: 3px; }
+
+  .passage-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: var(--yellow);
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.4);
+  }
+
+  .passage-text {
+    font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+    line-height: 1.9;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+  }
+
+  .passage-text .highlight-ar {
+    color: var(--yellow);
+    text-shadow: 0 0 8px rgba(255,215,0,0.4);
+    font-weight: 900;
+  }
+
+  .passage-text .highlight-hw {
+    color: #f9a8d4;
+    font-weight: 900;
+  }
+
+  .read-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    padding: 10px 24px;
+    border: 2px solid var(--yellow);
+    border-radius: 50px;
+    background: rgba(255,215,0,0.1);
+    color: var(--yellow);
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+  }
+
+  .read-btn:hover { background: rgba(255,215,0,0.2); transform: scale(1.04); }
+
+  .comp-question {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(1.1rem, 4.5vw, 1.6rem);
+    letter-spacing: 1px;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    margin: 8px 0 12px;
+    line-height: 1.5;
+    animation: webShoot 0.4s ease;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Background web pattern -->
+<div class="web-bg">
+  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="web" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+        <!-- radial web lines -->
+        <line x1="60" y1="60" x2="0"   y2="0"   stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="60"  y2="0"   stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="120" y2="0"   stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="120" y2="60"  stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="120" y2="120" stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="60"  y2="120" stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="0"   y2="120" stroke="white" stroke-width="0.8"/>
+        <line x1="60" y1="60" x2="0"   y2="60"  stroke="white" stroke-width="0.8"/>
+        <!-- concentric rings -->
+        <circle cx="60" cy="60" r="18"  fill="none" stroke="white" stroke-width="0.6"/>
+        <circle cx="60" cy="60" r="35"  fill="none" stroke="white" stroke-width="0.6"/>
+        <circle cx="60" cy="60" r="52"  fill="none" stroke="white" stroke-width="0.6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#web)"/>
+  </svg>
+</div>
+
+<!-- City skyline -->
+<svg class="city" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,160 L0,100 L30,100 L30,70 L50,70 L50,50 L70,50 L70,70 L90,70 L90,40 L100,40 L100,20 L110,20 L110,40 L120,40 L120,70 L140,70 L140,80 L160,80 L160,60 L170,60 L170,40 L180,40 L180,60 L190,60 L190,80 L220,80 L220,50 L240,50 L240,30 L250,30 L250,10 L260,10 L260,30 L270,30 L270,50 L290,50 L290,80 L320,80 L320,60 L340,60 L340,90 L370,90 L370,55 L390,55 L390,35 L400,35 L400,55 L420,55 L420,90 L450,90 L450,70 L470,70 L470,50 L490,50 L490,30 L500,30 L500,10 L510,10 L510,30 L520,30 L520,50 L540,50 L540,70 L560,70 L560,90 L580,90 L580,60 L600,60 L600,40 L620,40 L620,60 L650,60 L650,85 L680,85 L680,55 L700,55 L700,35 L710,35 L710,55 L730,55 L730,85 L760,85 L760,70 L780,70 L780,50 L800,50 L800,70 L820,70 L820,85 L850,85 L850,50 L870,50 L870,30 L880,30 L880,10 L890,10 L890,30 L900,30 L900,50 L920,50 L920,85 L950,85 L950,65 L970,65 L970,85 L1000,85 L1000,60 L1020,60 L1020,40 L1040,40 L1040,60 L1060,60 L1060,85 L1090,85 L1090,70 L1110,70 L1110,85 L1140,85 L1140,60 L1160,60 L1160,85 L1200,85 L1200,160 Z" fill="rgba(13,31,79,0.8)"/>
+  <!-- windows -->
+  <rect x="92" y="25" width="6" height="5" fill="rgba(255,215,0,0.3)"/>
+  <rect x="103" y="25" width="6" height="5" fill="rgba(255,215,0,0.3)"/>
+  <rect x="243" y="15" width="5" height="5" fill="rgba(255,215,0,0.3)"/>
+  <rect x="253" y="15" width="5" height="5" fill="rgba(255,215,0,0.5)"/>
+  <rect x="493" y="15" width="5" height="5" fill="rgba(255,215,0,0.4)"/>
+  <rect x="503" y="15" width="5" height="5" fill="rgba(255,215,0,0.2)"/>
+  <rect x="872" y="15" width="5" height="5" fill="rgba(255,215,0,0.5)"/>
+  <rect x="882" y="15" width="5" height="5" fill="rgba(255,215,0,0.3)"/>
+</svg>
+
+<!-- Spider hanging from thread -->
+<div class="spider-hang">
+  <div class="web-thread" style="height:130px;"></div>
+  <span class="spider-emoji">🕷️</span>
+</div>
+
+<div class="confetti-wrap" id="confettiWrap"></div>
+<div class="streak-badge" id="streakBadge">🕸️ WEB STREAK!</div>
+
+<div class="game-container">
+  <header>
+    <div class="header-badge">🕷️ READING MISSION</div>
+    <h1>SPIDER-MAN<br><span>WORD BLAST!</span></h1>
+    <div class="subtitle">Feb 9–20 · 1st Grade · Lessons 77–81</div>
+  </header>
+
+  <div class="hud">
+    <div class="score-pill" id="scoreBadge">🕸️ 0 PTS</div>
+    <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+    <div class="q-pill" id="qCounter">1 / 10</div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="tab-btn active" onclick="setMode('heartwords')">💗<br>HEART<br>WORDS</button>
+    <button class="tab-btn" onclick="setMode('decode')">🔤<br>DECODE<br>WORDS</button>
+    <button class="tab-btn" onclick="setMode('arpattern')">⭐<br>AR<br>SOUND</button>
+    <button class="tab-btn" onclick="setMode('orpattern')">🌊<br>OR<br>SOUND</button>
+    <button class="tab-btn" onclick="setMode('erpattern')">🌿<br>ER<br>SOUND</button>
+    <button class="tab-btn" onclick="setMode('irupattern')">🐢<br>IR·UR<br>SOUND</button>
+    <button class="tab-btn" onclick="setMode('passage')">🌱<br>THE<br>GARDEN</button>
+    <button class="tab-btn" onclick="setMode('passage2')">🌿<br>FERN<br>STORY</button>
+    <button class="tab-btn" onclick="setMode('passage3')">🏄<br>TURTLE<br>SURFS</button>
+  </div>
+
+  <div class="card" id="mainCard">
+    <div class="autoread-bar" id="autoreadBar"></div>
+    <div class="prompt-label" id="promptLabel">Loading...</div>
+    <div id="questionArea"></div>
+    <div class="choices" id="choicesArea"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">NEXT MISSION ➡️</button>
+  </div>
+
+  <div class="card end-screen" id="endScreen">
+    <span class="end-hero" id="endHero">🕷️</span>
+    <h2 id="endTitle">MISSION COMPLETE!</h2>
+    <div class="end-score" id="endScore"></div>
+    <div class="end-message" id="endMessage"></div>
+    <button class="play-again-btn" onclick="startGame()">🕸️ NEW MISSION!</button>
+  </div>
+</div>
+
+<!-- Sound toggle fixed button -->
+<button class="sound-toggle on" id="soundToggle" onclick="toggleSound()">
+  <span class="toggle-dot"></span>
+  <span id="soundLabel">🔊 SOUND ON</span>
+</button>
+
+<script>
+// ── TEXT-TO-SPEECH ENGINE ─────────────────────────────────────
+let soundOn = true;
+let voices = [];
+let barInterval = null;
+
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  return voices.find(v =>
+    (v.name.includes('Samantha') || v.name.includes('Karen') ||
+     v.name.includes('Google US English') || v.name.includes('Daniel'))
+    && v.lang.startsWith('en')
+  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+}
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// Phonics pronunciation overrides
+const PRONOUNCE = {
+  'ar':'arr sound', 'or':'or sound', 'er':'er sound',
+  'ir · ur':'ir and ur sound — like bird and surf',
+  'pretty':'pretty', 'nothing':'nothing', 'people':'people',
+  'because':'because', 'move':'moov', 'friend':'frend',
+  'other':'other', 'another':'another', 'mother':'mother', 'brother':'brother',
+};
+
+function speak(text, opts = {}) {
+  if (!soundOn || !text) return;
+  speechSynthesis.cancel();
+  clearSpeakingUI();
+  const clean = text.replace(/[^\w\s'?!,.\-–·]/gu, '').replace(/\s+/g,' ').trim();
+  if (!clean) return;
+  const utt = new SpeechSynthesisUtterance(PRONOUNCE[clean.toLowerCase()] || clean);
+  utt.voice  = loadVoices();
+  utt.rate   = opts.rate  || 0.82;
+  utt.pitch  = opts.pitch || 1.05;
+  utt.volume = 1;
+  if (opts.btn) {
+    opts.btn.classList.add('speaking');
+    utt.onend = () => opts.btn && opts.btn.classList.remove('speaking');
+  }
+  speechSynthesis.speak(utt);
+}
+
+function clearSpeakingUI() {
+  document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById('soundToggle');
+  btn.classList.toggle('on', soundOn);
+  document.getElementById('soundLabel').textContent = soundOn ? '🔊 SOUND ON' : '🔇 SOUND OFF';
+  if (!soundOn) { speechSynthesis.cancel(); clearAnimBar(); }
+  else speak("Sound on! Let's go!", { rate: 0.9 });
+}
+
+function animateBar(durationMs) {
+  clearAnimBar();
+  const bar = document.getElementById('autoreadBar');
+  if (!bar) return;
+  bar.style.width = '0%';
+  let elapsed = 0;
+  barInterval = setInterval(() => {
+    elapsed += 50;
+    bar.style.width = Math.min(100, (elapsed / durationMs) * 100) + '%';
+    if (elapsed >= durationMs) clearAnimBar();
+  }, 50);
+}
+
+function clearAnimBar() {
+  if (barInterval) { clearInterval(barInterval); barInterval = null; }
+  const bar = document.getElementById('autoreadBar');
+  if (bar) bar.style.width = '0%';
+}
+
+// Chain multiple utterances for auto-read
+function sayChain(parts) {
+  if (!soundOn || !parts.length) return;
+  speechSynthesis.cancel();
+  clearSpeakingUI();
+  const totalMs = parts.reduce((a, p) => a + (p.text.length / (p.rate || 0.82)) * 58, 0);
+  animateBar(totalMs);
+  let idx = 0;
+  function next() {
+    if (idx >= parts.length || !soundOn) return;
+    const p = parts[idx++];
+    const utt = new SpeechSynthesisUtterance(p.text);
+    utt.voice  = loadVoices();
+    utt.rate   = p.rate  || 0.82;
+    utt.pitch  = p.pitch || 1.05;
+    utt.volume = 1;
+    utt.onend  = next;
+    speechSynthesis.speak(utt);
+  }
+  next();
+}
+
+// Build auto-read script for each question type
+function autoRead(q) {
+  if (!soundOn) return;
+  const promptText = q.prompt.replace(/[^a-zA-Z0-9 '?!,.\-]/g, '');
+  const parts = [{ text: promptText, rate: 0.85 }];
+
+  if (q.isHeart || q.kind === 'spell' || q.kind === 'decode') {
+    parts.push({ text: q.display, rate: 0.6, pitch: 1.1 });
+    parts.push({ text: 'again... ' + q.display, rate: 0.55, pitch: 1.1 });
+  } else if (q.kind === 'jumble') {
+    parts.push({ text: 'The mixed-up letters are... ' + q.display.split('').join('... '), rate: 0.65 });
+  } else if (q.kind === 'sentence') {
+    parts.push({ text: q.display.replace('______', 'blank'), rate: 0.78 });
+  } else if (q.kind === 'pattern') {
+    parts.push({ text: PRONOUNCE[q.display.toLowerCase()] || q.display, rate: 0.72, pitch: 1.15 });
+    parts.push({ text: q.hint.replace(/[\/·]/g, '').replace(/\s+/g,' '), rate: 0.78 });
+  } else if (q.kind === 'chain') {
+    const ct = q.display.replace(/→/g, ' then ').replace('?', '. What comes next?');
+    parts.push({ text: ct, rate: 0.78 });
+  } else if (q.kind === 'comprehension') {
+    parts.push({ text: q.q, rate: 0.82 });
+  }
+
+  parts.push({ text: 'Now pick your answer', rate: 0.88 });
+  sayChain(parts);
+}
+
+// Speak a single answer choice
+function speakChoice(text, btn) {
+  if (!soundOn) return;
+  speechSynthesis.cancel();
+  clearSpeakingUI();
+  const utt = new SpeechSynthesisUtterance(PRONOUNCE[text.toLowerCase()] || text);
+  utt.voice  = loadVoices();
+  utt.rate   = 0.7;
+  utt.pitch  = 1.1;
+  utt.volume = 1;
+  if (btn) {
+    btn.classList.add('speaking');
+    utt.onend = () => btn.classList.remove('speaking');
+  }
+  speechSynthesis.speak(utt);
+}
+
+// ── WEEK 1 (Feb 9–13) HOMEWORK DATA ──────────────────────────
+const HEART_WORDS_W1 = ['pretty','nothing','people','move','friend','because'];
+// ── WEEK 2 (Feb 16–20) HOMEWORK DATA ─────────────────────────
+const HEART_WORDS_W2 = ['other','another','mother','brother'];
+const ALL_HEART_WORDS = [...HEART_WORDS_W1, ...HEART_WORDS_W2];
+
+const DECODE_WEEK1 = ['table','apple','middle','happy','child','cry'];
+const DECODE_WEEK2 = ['part','start','hard','more','sport','store'];
+const DECODE_WEEK3 = ['her','never','first','bird','shirt','turn','fur'];
+
+const SENTENCES_W1 = {
+  pretty:  ['The game will start at four.','You could make a pretty scarf.'],
+  nothing: ['There was nothing at the store.','I went to get a fork for my pork.']
+};
+const SENTENCES_W2 = {
+  other:   ['We got her another fern.','The store clerk is so nice.'],
+  another: ['We got her another fern.'],
+  mother:  ['Her mother wore a white shirt.'],
+  brother: ['My brother had the first turn.']
+};
+const ALL_SENTENCES = { ...SENTENCES_W1, ...SENTENCES_W2 };
+
+const AR_WORDS = ['far','star','card','harm','mark','sharp','cart','part','mart','smart','bark','dark','park','spark','barn','yard','farm','arm'];
+const OR_WORDS = ['fork','sort','storm','core','score','shore','sport','port','fort','more','store','horn','corn','worn','born','horse'];
+const ER_WORDS = ['verb','fern','stern','perch','never','after','her','per','serve','nerve','swerve','perk'];
+const IRUR_WORDS = ['bird','dirt','shirt','burn','surf','curl','fir','first','thirst','fur','furl','curb','sir'];
+
+const AR_CHAINS = [
+  { display:'cart → part → mart → ?', answer:'smart', choices:['smart','start','spark','short'] },
+  { display:'bark → dark → park → ?', answer:'spark', choices:['spark','stark','sport','shore'] },
+  { display:'farm → harm → arm → ?',  answer:'charm', choices:['charm','chain','chore','share'] },
+];
+const OR_CHAINS = [
+  { display:'sort → fort → port → ?', answer:'sport', choices:['sport','spark','start','sharp'] },
+  { display:'sore → more → core → ?', answer:'score', choices:['score','shore','sport','store'] },
+  { display:'born → corn → horn → ?', answer:'worn',  choices:['worn','word','farm','harm'] },
+];
+const ER_CHAINS = [
+  { display:'her → per → perch → ?',  answer:'perk',  choices:['perk','park','port','pore'] },
+  { display:'nerve → serve → ?',      answer:'swerve',choices:['swerve','starve','carve','curve'] },
+  { display:'fern → stern → ?',       answer:'intern',choices:['intern','insert','infer','extern'] },
+];
+const IRUR_CHAINS = [
+  { display:'fur → furl → curl → ?',  answer:'curb',  choices:['curb','core','cart','cord'] },
+  { display:'sir → fir → first → ?',  answer:'thirst',choices:['thirst','thrust','thick','thatch'] },
+  { display:'bird → dirt → shirt → ?',answer:'skirt', choices:['skirt','sport','spark','stern'] },
+];
+
+// ── PASSAGE 1: THE GARDEN (Lesson 77 — AR) ───────────────────
+const PASSAGE1_TEXT = `Omar loves to be in his garden on his farm. While it is still dark, he drags his old cart across the yard to the barn. He fills the cart with plants for the garden. When he gets to the garden, he looks at the plants one by one. Then he finds them all the best place to live. He finds big spaces for the large plants. He finds shade for the plants that do not like the harsh sun. He gives them all just what they want and makes them look so pretty. When Omar is done, he brings the cart back to the barn. Then he sits on his deck and looks at his garden with pride.`;
+
+const PASSAGE1_HTML = PASSAGE1_TEXT
+  .replace(/\b(cart|yard|barn|dark|farm|hard|star|far|mark|sharp|harm|park|bark|card|arm|start|part|smart|spark)\b/gi, '<span class="highlight-ar">$1</span>')
+  .replace(/\b(pretty|nothing|people|move|friend|because)\b/gi, '<span class="highlight-hw">$1</span>');
+
+const PASSAGE1_QS = [
+  { q:'Where does Omar love to spend time?', answer:'his garden', choices:['his garden','the store','the barn','the yard'] },
+  { q:'What does Omar drag across the yard?', answer:'his old cart', choices:['his old cart','a bag of seeds','a wheelbarrow','a box'] },
+  { q:'Where does Omar take the cart first?', answer:'the barn', choices:['the barn','the garden','his deck','the farm'] },
+  { q:'What does Omar put in the cart?', answer:'plants', choices:['plants','tools','water','seeds'] },
+  { q:'What does Omar find for the large plants?', answer:'big spaces', choices:['big spaces','lots of water','deep holes','bright sun'] },
+  { q:'Which plants does Omar find shade for?', answer:'plants that do not like the harsh sun', choices:['plants that do not like the harsh sun','the tallest plants','plants from the barn','all the plants'] },
+  { q:'How does Omar feel at the end of the story?', answer:'pride', choices:['pride','bored','hungry','tired'] },
+  { q:'Which word from the story has the AR sound?', answer:'cart', choices:['cart','sun','deck','love'] },
+  { q:'Which word from the story has the AR sound?', answer:'yard', choices:['yard','plants','best','one'] },
+  { q:'Which word from the story is a heart word?', answer:'pretty', choices:['pretty','garden','barn','cart'] },
+  { q:'What does Omar do AFTER filling the cart?', answer:'goes to the garden', choices:['goes to the garden','sits on the deck','goes to sleep','waters the plants'] },
+  { q:'What time of day does Omar start working?', answer:'when it is still dark', choices:['when it is still dark','at noon','in the evening','at sunrise'] },
+];
+
+// ── PASSAGE 2: MY SISTER'S FERN (Lesson 80 — ER) ─────────────
+const PASSAGE2_TEXT = `My sister adores plants. She wants to be a farmer or a gardener when she gets older. She has a number of plants at home, but the plant she loves the most is a fern. She has five different kinds of ferns in her backyard. When the ferns are on the verge of wilting, she uses her mister to get them wet. After that, they perk back up. If it is too hot, she gives the ferns some shade on the porch. My sister thinks there is nothing more pretty than a fern!`;
+
+const PASSAGE2_HTML = PASSAGE2_TEXT
+  .replace(/\b(fern|ferns|her|older|gardener|farmer|number|after|perk|verge|mister|never|perch|stern|verb)\b/gi, '<span class="highlight-ar">$1</span>')
+  .replace(/\b(nothing|pretty|people|move|friend|because|other|another|mother|brother)\b/gi, '<span class="highlight-hw">$1</span>');
+
+const PASSAGE2_QS = [
+  { q:'What job does the sister want when she grows up?', answer:'a farmer or gardener', choices:['a farmer or gardener','a teacher','a surfer','a cook'] },
+  { q:'Which plant does the sister love most?', answer:'a fern', choices:['a fern','a cactus','a rose','a tree'] },
+  { q:'How many kinds of ferns does she have?', answer:'five', choices:['five','two','ten','three'] },
+  { q:'Where does she keep her ferns?', answer:'her backyard', choices:['her backyard','the kitchen','the barn','her bedroom'] },
+  { q:'What does she use when the ferns are wilting?', answer:'her mister', choices:['her mister','a hose','a bucket','a watering can'] },
+  { q:'What does she do when it is too hot?', answer:'gives the ferns shade on the porch', choices:['gives the ferns shade on the porch','brings them inside','puts them in water','covers them with cloth'] },
+  { q:'Which ER word is in this story?', answer:'fern', choices:['fern','cart','storm','bird'] },
+  { q:'Which ER word is in this story?', answer:'after', choices:['after','yard','born','shirt'] },
+  { q:'Which heart word is in this story?', answer:'nothing', choices:['nothing','yard','porch','mister'] },
+  { q:'Which heart word is in this story?', answer:'pretty', choices:['pretty','shade','ferns','kinds'] },
+];
+
+// ── PASSAGE 3: A TURTLE CAN SURF (Lesson 81 — IR/UR) ─────────
+const PASSAGE3_TEXT = `Irma the turtle loved to surf. Her mother, Shirly, was the first girl surfer in their turtle village, and Irma wanted to be just like her. Every morning Irma would rush to the shoreline. When she was surfing, Irma would do flips and turns. She would twirl like a twister. All the other animals were shocked that a girl turtle could surf so well! Irma would just yell, "A girl can do anything!" just like her mother told her. Irma would surf until sunset. When the sun was no longer in the sky, she would skip back home. Once she was home, she would curl up in her turtle bed and relax.`;
+
+const PASSAGE3_HTML = PASSAGE3_TEXT
+  .replace(/\b(surf|surfing|surfer|first|girl|twirl|turns|curl|turtle|shirt|bird|dirt|fur|burn|sir|fir)\b/gi, '<span class="highlight-ar">$1</span>')
+  .replace(/\b(other|another|mother|brother|nothing|pretty|people|move|friend|because)\b/gi, '<span class="highlight-hw">$1</span>');
+
+const PASSAGE3_QS = [
+  { q:'What sport does Irma love?', answer:'surfing', choices:['surfing','swimming','running','flying'] },
+  { q:"What is Irma's mother's name?", answer:'Shirly', choices:['Shirly','Sara','Sunny','Sandy'] },
+  { q:'What was Shirly the first of?', answer:'first girl surfer in the village', choices:['first girl surfer in the village','first turtle to swim','best cook in the village','fastest runner'] },
+  { q:'What tricks does Irma do while surfing?', answer:'flips and turns', choices:['flips and turns','jumps and rolls','spins and dives','leaps and bounds'] },
+  { q:'What does Irma twirl like?', answer:'a twister', choices:['a twister','a top','a wheel','a fan'] },
+  { q:'When does Irma stop surfing?', answer:'at sunset', choices:['at sunset','at noon','when it rains','when she is hungry'] },
+  { q:'What does Irma do when she gets home?', answer:'curl up in her turtle bed', choices:['curl up in her turtle bed','eat dinner','tell stories','go back to the water'] },
+  { q:'Which IR or UR word is in the story?', answer:'surf', choices:['surf','farm','store','perk'] },
+  { q:'Which IR or UR word is in the story?', answer:'curl', choices:['curl','barn','fern','shore'] },
+  { q:"Which heart word is in the story?", answer:'other', choices:['other','turtle','sunset','shoreline'] },
+  { q:"Which heart word is in the story?", answer:'mother', choices:['mother','village','morning','longer'] },
+];
+
+function buildPassageQuestions(qList) {
+  return shuffle(qList).slice(0, TOTAL).map((pq, i) => ({
+    kind: 'comprehension',
+    q: pq.q,
+    answer: pq.answer,
+    choices: shuffle(pq.choices),
+    prompt: 'READ THE STORY, THEN ANSWER!'
+  }));
+}
+
+// Spider-Man themed praise
+const CHEERS = [
+  '🕷️ WITH GREAT POWER!','🕸️ WEB SHOOTER!','⭐ AMAZING!','🦸 SUPER HERO!',
+  '🕷️ SPECTACULAR!','🌆 FRIENDLY NEIGHBORHOOD!','🕸️ THWIP!','⚡ AMAZING!'
+];
+
+const WEB_SYMBOLS = ['🕸️','⭐','🕷️','💥','✨','🔴','🔵'];
+
+const TOTAL = 10;
+let mode = 'heartwords', currentQuestion = 0, score = 0, streak = 0, answered = false, questions = [];
+
+const shuffle = a => [...a].sort(() => Math.random() - 0.5);
+const pick    = (a, n) => shuffle(a).slice(0, n);
+const rand    = a => a[Math.floor(Math.random() * a.length)];
+
+// ── QUESTION BUILDERS ─────────────────────────────────────────
+function buildHeartWordQuestions() {
+  const words = shuffle(ALL_HEART_WORDS);
+  return Array.from({ length: TOTAL }, (_, i) => {
+    const w = words[i % words.length];
+    const wrongs = pick(ALL_HEART_WORDS.filter(x => x !== w), 3);
+    const t = i % 3;
+    if (t === 0) {
+      return { kind:'spell', answer:w, choices:shuffle([w,...wrongs]),
+        prompt:'FIND THIS HEART WORD, SPIDER-HERO!', display:w.toUpperCase(), isHeart:true };
+    } else if (t === 1 && ALL_SENTENCES[w]) {
+      const sent = rand(ALL_SENTENCES[w]);
+      const blanked = sent.replace(new RegExp(w,'i'), '______');
+      return { kind:'sentence', answer:w, choices:shuffle([w,...wrongs]),
+        prompt:'WHICH WORD COMPLETES THE SENTENCE?', display:blanked };
+    } else {
+      const jumbled = shuffle(w.split('')).join('').toUpperCase();
+      return { kind:'jumble', answer:w, choices:shuffle([w,...wrongs]),
+        prompt:'UNSCRAMBLE THE LETTERS!', display:jumbled };
+    }
+  });
+}
+
+function buildDecodeQuestions() {
+  const all = [...DECODE_WEEK1, ...DECODE_WEEK2, ...DECODE_WEEK3];
+  return shuffle(all).slice(0, TOTAL).map((w, i) => {
+    const wrong = pick(all.filter(x => x !== w), 3);
+    return { kind:'decode', answer:w, choices:shuffle([w,...wrong]),
+      prompt: i%2===0 ? 'READ THIS WORD — THEN FIND IT!' : 'WHICH WORD IS SPELLED RIGHT?',
+      display: w.toUpperCase() };
+  });
+}
+
+function buildARQuestions() {
+  const words = shuffle(AR_WORDS);
+  return Array.from({ length: TOTAL }, (_, i) => {
+    if (i % 3 === 2) {
+      const chain = rand(AR_CHAINS);
+      return { kind:'chain', answer:chain.answer, choices:shuffle(chain.choices),
+        prompt:'COMPLETE THE WORD CHAIN!', display:chain.display };
+    }
+    const w = words[i % words.length];
+    return { kind:'pattern', answer:w, choices:shuffle([w,...pick(OR_WORDS,3)]),
+      prompt:'WHICH WORD HAS THE AR SOUND — LIKE "STAR"?', display:'AR', hint:'/ar/ like in CAR ⭐' };
+  });
+}
+
+function buildORQuestions() {
+  const words = shuffle(OR_WORDS);
+  return Array.from({ length: TOTAL }, (_, i) => {
+    if (i % 3 === 2) {
+      const chain = rand(OR_CHAINS);
+      return { kind:'chain', answer:chain.answer, choices:shuffle(chain.choices),
+        prompt:'COMPLETE THE WORD CHAIN!', display:chain.display };
+    }
+    const w = words[i % words.length];
+    return { kind:'pattern', answer:w, choices:shuffle([w,...pick(AR_WORDS,3)]),
+      prompt:'WHICH WORD HAS THE OR SOUND — LIKE "STORE"?', display:'OR', hint:'/or/ like in STORE 🌆' };
+  });
+}
+
+function buildERQuestions() {
+  const words = shuffle(ER_WORDS);
+  return Array.from({ length: TOTAL }, (_, i) => {
+    if (i % 3 === 2) {
+      const chain = rand(ER_CHAINS);
+      return { kind:'chain', answer:chain.answer, choices:shuffle(chain.choices),
+        prompt:'COMPLETE THE WORD CHAIN!', display:chain.display };
+    }
+    const w = words[i % words.length];
+    return { kind:'pattern', answer:w, choices:shuffle([w,...pick([...AR_WORDS,...OR_WORDS],3)]),
+      prompt:'WHICH WORD HAS THE ER SOUND — LIKE "FERN"?', display:'ER', hint:'/er/ like in FERN 🌿' };
+  });
+}
+
+function buildIRURQuestions() {
+  const words = shuffle(IRUR_WORDS);
+  return Array.from({ length: TOTAL }, (_, i) => {
+    if (i % 3 === 2) {
+      const chain = rand(IRUR_CHAINS);
+      return { kind:'chain', answer:chain.answer, choices:shuffle(chain.choices),
+        prompt:'COMPLETE THE WORD CHAIN!', display:chain.display };
+    }
+    const w = words[i % words.length];
+    return { kind:'pattern', answer:w, choices:shuffle([w,...pick([...AR_WORDS,...ER_WORDS],3)]),
+      prompt:'WHICH WORD HAS THE IR or UR SOUND — LIKE "BIRD" or "SURF"?', display:'IR · UR', hint:'/ir/ · /ur/ like BIRD 🐦 · SURF 🏄' };
+  });
+}
+function renderQuestion() {
+  const q = questions[currentQuestion];
+  answered = false;
+  speechSynthesis.cancel();
+  clearAnimBar();
+
+  document.getElementById('qCounter').textContent = `${currentQuestion+1} / ${TOTAL}`;
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('promptLabel').textContent = q.prompt;
+
+  const area = document.getElementById('questionArea');
+  const choicesEl = document.getElementById('choicesArea');
+
+  // Helper: speaker button for main word/display
+  const speakWordBtn = (word) =>
+    `<button class="speak-btn" title="Hear this word" onclick="event.stopPropagation();speak('${word.replace(/'/g,"\\'")}',{rate:0.65,pitch:1.1,btn:this})">🔊</button>`;
+
+  // Helper: choices with individual speaker buttons
+  const makeChoices = (choices, answer, isText = false) => {
+    const style = isText
+      ? `font-family:'Nunito',sans-serif;font-size:clamp(0.8rem,3vw,0.95rem);letter-spacing:0;font-weight:900;padding:12px 8px;text-align:left;`
+      : '';
+    return choices.map(c => {
+      const safeC = JSON.stringify(c);
+      const safeA = JSON.stringify(answer);
+      return `<button class="choice-btn" style="${style}" onclick="checkAnswer(this,${safeC},${safeA})">
+        ${c} <span class="choice-speak" title="Hear this" onclick="event.stopPropagation();speakChoice('${c.replace(/'/g,"\\'").replace(/"/g,'\\"')}',this)">🔊</span>
+      </button>`;
+    }).join('');
+  };
+
+  if (q.isHeart) {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span class="heart-word-display">${q.display}</span>
+        ${speakWordBtn(q.answer)}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+
+  } else if (q.kind === 'passage-intro' || q.kind === 'comprehension') {
+    let passageTitle, passageHTML, passageText;
+    if (mode === 'passage2') {
+      passageTitle = '🌿 MY SISTER\'S FERN — LESSON 80';
+      passageHTML = PASSAGE2_HTML; passageText = PASSAGE2_TEXT;
+    } else if (mode === 'passage3') {
+      passageTitle = '🐢 A TURTLE CAN SURF! — LESSON 81';
+      passageHTML = PASSAGE3_HTML; passageText = PASSAGE3_TEXT;
+    } else {
+      passageTitle = '🌱 THE GARDEN — LESSON 77';
+      passageHTML = PASSAGE1_HTML; passageText = PASSAGE1_TEXT;
+    }
+    area.innerHTML = `
+      <div class="passage-wrap">
+        <div class="passage-title" style="display:flex;align-items:center;gap:8px;">
+          ${passageTitle}
+          <button class="speak-btn" style="font-size:0.9rem;width:32px;height:32px;" title="Read whole story aloud"
+            onclick="speak(${JSON.stringify(passageText)},{rate:0.78,btn:this})">🔊</button>
+        </div>
+        <div class="passage-text">${passageHTML}</div>
+      </div>
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin:-8px 0 8px;font-weight:700;">
+        ⭐ = pattern sound &nbsp;|&nbsp; 💗 = heart word
+      </div>
+      <div class="comp-question" style="display:flex;align-items:center;gap:8px;justify-content:center;">
+        <span>${q.q}</span>
+        ${speakWordBtn(q.q)}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer, true);
+    setTimeout(() => autoRead(q), 400);
+    return;
+
+  } else if (q.kind === 'sentence') {
+    const html = q.display.replace('______', '<span class="blank-slot">______</span>');
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+        <div class="sentence-display" style="flex:1">${html}</div>
+        ${speakWordBtn(q.display.replace('______','blank'))}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+
+  } else if (q.kind === 'jumble') {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <div class="big-word" style="color:var(--yellow);letter-spacing:12px">${q.display}</div>
+        ${speakWordBtn(q.display.split('').join(' '))}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+
+  } else if (q.kind === 'pattern') {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <div class="pattern-display">${q.display}</div>
+        ${speakWordBtn(PRONOUNCE[q.display.toLowerCase()] || q.display)}
+      </div>
+      <div class="sound-hint">${q.hint}</div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+
+  } else if (q.kind === 'chain') {
+    const parts = q.display.split('→');
+    const chainHtml = parts.map((p, i) =>
+      i < parts.length-1
+        ? `<span class="chain-word">${p.trim()}</span> →`
+        : ` <span class="chain-q">?</span>`
+    ).join(' ');
+    const chainSpeak = q.display.replace(/→/g,' then ').replace('?','what comes next?');
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <div class="chain-display" style="flex:1">${chainHtml}</div>
+        ${speakWordBtn(chainSpeak)}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+
+  } else {
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <div class="big-word" style="color:var(--red)">${q.display}</div>
+        ${speakWordBtn(q.answer)}
+      </div>`;
+    choicesEl.innerHTML = makeChoices(q.choices, q.answer);
+  }
+
+  // Auto-read after a short delay so rendering is done
+  setTimeout(() => autoRead(q), 350);
+}
+
+function checkAnswer(btn, chosen, correct) {
+  if (answered) return;
+  answered = true;
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  const fb = document.getElementById('feedback');
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    score += 10;
+    streak++;
+    document.getElementById('scoreBadge').textContent = `🕸️ ${score} PTS`;
+
+    if (streak >= 3) {
+      const sb = document.getElementById('streakBadge');
+      sb.textContent = `🕸️ ${streak}x WEB STREAK!`;
+      sb.style.display = 'block';
+      setTimeout(() => sb.style.display = 'none', 2200);
+    }
+
+    fb.textContent = rand(CHEERS);
+    fb.className = 'feedback good';
+    const cheerText = fb.textContent.replace(/[^\w\s'!]/gu,'');
+    speak(cheerText, { rate: 0.9, pitch: 1.2 });
+    confettiBurst();
+  } else {
+    btn.classList.add('wrong');
+    streak = 0;
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (b.textContent.trim() === correct) b.classList.add('correct');
+    });
+    fb.textContent = `The answer is "${correct.toUpperCase()}" — keep swinging! 🕷️`;
+    fb.className = 'feedback bad';
+    speak(`The answer is ${correct}. Keep swinging!`, { rate: 0.85 });
+  }
+
+  document.getElementById('xpFill').style.width = ((currentQuestion+1) / TOTAL * 100) + '%';
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion >= TOTAL) showEndScreen();
+  else renderQuestion();
+}
+
+function showEndScreen() {
+  document.getElementById('mainCard').style.display = 'none';
+  const end = document.getElementById('endScreen');
+  end.style.display = 'block';
+  const pct = score / (TOTAL * 10) * 100;
+  let hero, title, msg;
+  if (pct === 100)     { hero='🏆'; title='PERFECT HERO!';      msg='Amazing-Fantasy level reading skills! You\'re incredible!'; }
+  else if (pct >= 80)  { hero='🕷️'; title='SPECTACULAR!';       msg='Your Spidey-Sense for words is incredible!'; }
+  else if (pct >= 60)  { hero='🌆'; title='FRIENDLY HERO!';     msg='Great swinging! Keep practicing your words!'; }
+  else                 { hero='💪'; title='KEEP SWINGING!';     msg='Every hero starts somewhere — you\'re getting better!'; }
+  document.getElementById('endHero').textContent = hero;
+  document.getElementById('endTitle').textContent = title;
+  document.getElementById('endScore').textContent = `${score} / ${TOTAL * 10}`;
+  document.getElementById('endMessage').textContent = msg;
+  confettiBurst(true);
+  setTimeout(() => speak(`${title}! ${msg}`, { rate: 0.85, pitch: 1.1 }), 600);
+}
+
+function setMode(m) {
+  mode = m;
+  const modes = ['heartwords','decode','arpattern','orpattern','erpattern','irupattern','passage','passage2','passage3'];
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', modes[i] === m));
+  startGame();
+}
+
+function startGame() {
+  currentQuestion = 0; score = 0; streak = 0; answered = false;
+  speechSynthesis.cancel();
+  clearAnimBar();
+  questions = mode === 'heartwords'  ? buildHeartWordQuestions()
+            : mode === 'decode'      ? buildDecodeQuestions()
+            : mode === 'arpattern'   ? buildARQuestions()
+            : mode === 'orpattern'   ? buildORQuestions()
+            : mode === 'erpattern'   ? buildERQuestions()
+            : mode === 'irupattern'  ? buildIRURQuestions()
+            : mode === 'passage'     ? buildPassageQuestions(PASSAGE1_QS)
+            : mode === 'passage2'    ? buildPassageQuestions(PASSAGE2_QS)
+            :                          buildPassageQuestions(PASSAGE3_QS);
+
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('mainCard').style.display = 'block';
+  document.getElementById('scoreBadge').textContent = '🕸️ 0 PTS';
+  document.getElementById('xpFill').style.width = '0%';
+  renderQuestion();
+}
+
+function confettiBurst(big = false) {
+  const wrap = document.getElementById('confettiWrap');
+  const symbols = big
+    ? ['🕸️','⭐','🕷️','💥','✨','🔴','🔵','❤️','🌟']
+    : ['🕸️','⭐','💥','✨'];
+  const count = big ? 50 : 18;
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'web-shot';
+    el.textContent = rand(symbols);
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+    el.style.animationDelay = (Math.random() * 0.7) + 's';
+    el.style.animationDuration = (1 + Math.random() * 1) + 's';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+}
+
+startGame();
+</script>
+</body>
+</html>
